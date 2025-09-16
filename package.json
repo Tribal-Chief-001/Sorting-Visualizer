@@ -3,8 +3,8 @@
   "version": "1.1.0",
   "private": true,
   "scripts": {
-    "start": "esbuild index.tsx --bundle --outfile=bundle.js --jsx=automatic --servedir=. --watch",
-    "build": "mkdir -p dist && cp index.html dist/ && esbuild index.tsx --bundle --outfile=dist/bundle.js --jsx=automatic --minify"
+    "start": "vite",
+    "build": "vite build"
   },
   "dependencies": {
     "react": "^19.1.1",
@@ -13,7 +13,9 @@
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
     "esbuild": "^0.21.3",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vite": "^5.2.13"
   }
 }
