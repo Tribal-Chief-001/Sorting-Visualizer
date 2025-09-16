@@ -42,7 +42,8 @@ const MiniVisualizer: React.FC<MiniVisualizerProps> = ({ algorithm, initialNumer
   useEffect(() => {
     // Automatically start sorting when the component mounts
     startSorting();
-  }, [startSorting]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getBorderClass = () => {
     if (!rank) return 'border-black border-4';
