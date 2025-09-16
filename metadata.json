@@ -1,0 +1,5 @@
+{
+  "name": "Neo-Brutalist Sorting Visualizer",
+  "description": "An interactive web application to visualize various sorting algorithms with a stark, neo-brutalist design. Users can generate random arrays, select from algorithms like Bubble Sort, Merge Sort, and Quick Sort, adjust the animation speed, and observe the sorting process in real-time. The app also displays the time and space complexity for each algorithm.",
+  "requestFramePermissions": []
+}
