@@ -1,0 +1,11 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+/bundle.js
+
+# IDE & OS files
+.vscode
+.idea
+.DS_Store
