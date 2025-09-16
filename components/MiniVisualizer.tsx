@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { AlgorithmType, ArrayBar, AnimationStep, SortStats, ComparisonResult } from '../types';
-import { getSortAnimations } from '../algorithms';
-import { COLORS } from '../constants';
-import BrutalCard from './ui/BrutalCard';
+import React, { useEffect } from 'react';
+import type { AlgorithmType, ComparisonResult } from '../types';
+import { useSortAnimation } from '../hooks/useSortAnimation';
 
 // Helper to darken a hex color by a percentage
 const darkenColor = (hex: string, percent: number): string => {
@@ -27,81 +25,25 @@ interface MiniVisualizerProps {
 }
 
 const MiniVisualizer: React.FC<MiniVisualizerProps> = ({ algorithm, initialNumericArray, speed, onComplete, rank }) => {
-  const [array, setArray] = useState<ArrayBar[]>([]);
-  const [stats, setStats] = useState<SortStats>({ comparisons: 0, arrayWrites: 0 });
-  const [isDone, setIsDone] = useState(false);
-
-  const animationFrameId = useRef<number | null>(null);
-  const animationIndexRef = useRef<number>(0);
-  const animationsRef = useRef<AnimationStep[]>([]);
-  const finalStatsRef = useRef(stats);
-
-  useEffect(() => {
-    finalStatsRef.current = stats;
-  }, [stats]);
-  
-  const runAnimation = useCallback(() => {
-    if (animationIndexRef.current >= animationsRef.current.length) {
-      setIsDone(true);
-      onComplete({ algorithm, stats: finalStatsRef.current });
-      setArray(prev => prev.map(bar => ({ ...bar, color: COLORS.SORTED, className: ''})));
-      return;
-    }
-
-    const step = animationsRef.current[animationIndexRef.current];
-    const [type] = step;
-
-    setStats(prev => {
-        if (type === 'compare') return { ...prev, comparisons: prev.comparisons + 1 };
-        if (type === 'swap') return { ...prev, arrayWrites: prev.arrayWrites + 2 };
-        if (type === 'overwrite') return { ...prev, arrayWrites: prev.arrayWrites + 1 };
-        return prev;
-    });
-
-    setArray(prevArray => {
-      const newArray = [...prevArray];
-      if (type === 'compare' || type === 'pivot' || type === 'revert') {
-        const [, barOneIdx, barTwoIdx] = step;
-        const color = type === 'revert' ? COLORS.PRIMARY : type === 'pivot' ? COLORS.ACCENT : COLORS.SECONDARY;
-        if (newArray[barOneIdx]) newArray[barOneIdx] = { ...newArray[barOneIdx], color };
-        if (newArray[barTwoIdx]) newArray[barTwoIdx] = { ...newArray[barTwoIdx], color };
-      } else if (type === 'swap') {
-        const [, barOneIdx, barTwoIdx] = step;
-        const temp = newArray[barOneIdx].value;
-        newArray[barOneIdx] = { ...newArray[barOneIdx], value: newArray[barTwoIdx].value };
-        newArray[barTwoIdx] = { ...newArray[barTwoIdx], value: temp };
-      } else if (type === 'overwrite') {
-        const [, barIdx, newValue] = step;
-        if (newArray[barIdx]) newArray[barIdx] = { ...newArray[barIdx], value: newValue };
-      } else if (type === 'finalize') {
-        const [, barIdx] = step;
-        if (newArray[barIdx]) newArray[barIdx] = { ...newArray[barIdx], color: COLORS.FINAL };
-      }
-      return newArray;
-    });
-
-    animationIndexRef.current++;
-    const animationDelay = 301 - speed;
-    animationFrameId.current = window.setTimeout(runAnimation, animationDelay);
-  }, [speed, algorithm, onComplete]);
+  const {
+    array,
+    stats,
+    isSorted,
+    startSorting,
+  } = useSortAnimation({
+    algorithm,
+    speed,
+    initialArray: initialNumericArray.map(value => ({ value, color: '#4169E1', className: '' })),
+    onAnimationComplete: () => {
+      onComplete({ algorithm, stats });
+    },
+  });
 
   useEffect(() => {
-    const initialBars = initialNumericArray.map(value => ({
-      value,
-      color: COLORS.PRIMARY,
-    }));
-    setArray(initialBars);
-    
-    const animations = getSortAnimations(algorithm, [...initialNumericArray]);
-    animationsRef.current = animations;
-    
-    runAnimation();
+    // Automatically start sorting when the component mounts
+    startSorting();
+  }, [startSorting]);
 
-    return () => {
-      if (animationFrameId.current) clearTimeout(animationFrameId.current);
-    };
-  }, [algorithm, initialNumericArray, runAnimation]);
-  
   const getBorderClass = () => {
     if (!rank) return 'border-black border-4';
     if (rank === 1) return 'border-yellow-400 border-8';
@@ -112,7 +54,7 @@ const MiniVisualizer: React.FC<MiniVisualizerProps> = ({ algorithm, initialNumer
 
   return (
     <div className={`bg-white shadow-[8px_8px_0px_#000000] ${getBorderClass()}`}>
-      <h2 className="text-lg font-black p-2 border-b-4 uppercase bg-[#FFFF00] text-center truncate" style={{borderColor: 'inherit'}}>
+      <h2 className="text-lg font-black p-2 border-b-4 uppercase bg-[#FFFF00] text-center truncate" style={{ borderColor: 'inherit' }}>
         {algorithm}
       </h2>
       <div className="flex-grow flex items-end justify-center gap-[1px] p-2 min-h-[12rem]">
@@ -128,13 +70,13 @@ const MiniVisualizer: React.FC<MiniVisualizerProps> = ({ algorithm, initialNumer
           ></div>
         ))}
       </div>
-      <div className="p-2 border-t-4 text-sm font-bold" style={{borderColor: 'inherit'}}>
-        {isDone ? (
+      <div className="p-2 border-t-4 text-sm font-bold" style={{ borderColor: 'inherit' }}>
+        {isSorted ? (
           <div className="text-center space-y-1">
             <p className="text-xl font-black">RANK #{rank}</p>
             <div className="flex justify-around text-xs">
-                <span>{stats.comparisons.toLocaleString()} comps</span>
-                <span>{stats.arrayWrites.toLocaleString()} writes</span>
+              <span>{stats.comparisons.toLocaleString()} comps</span>
+              <span>{stats.arrayWrites.toLocaleString()} writes</span>
             </div>
           </div>
         ) : (
